@@ -12,6 +12,8 @@ import pandas as pd
 import os.path
 import networkx as nx
 from graph import Graph
+from sklearn.model_selection import StratifiedKFold
+import numpy as np
 
 
 def parse_dataset(name: str):
@@ -102,7 +104,22 @@ def parse_dataset(name: str):
     return graphs
 
 
+# Graphs => list of graph objects
+# The number of folds to train on
+# Return an [(test_graphs, train_graphs)]
+# Seed
+def k_fold_splitter(graphs: [Graph], seed: int, fold_count: int):
+    skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
+    labels = [graph.label for graph in graphs]
+    graphs = np.array(graphs)
+
+    graph_list_folded = []
+    for train_idxs, test_idxs in skf.split(labels, labels)[:fold_count]:
+        graph_list_folded.append((graphs[train_idxs], graphs[test_idxs]))
+
+    return graph_list_folded
+
+
 if __name__ == "__main__":
-    parse_dataset("IMDB-MULTI")
-    # parse_dataset("PROTEINS")
+    parse_dataset("PROTEINS")
     # parse_dataset("REDDIT-MULTI-5K")

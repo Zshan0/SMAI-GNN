@@ -3,3 +3,4 @@ tqdm
 numpy
 networkx
 pandas
+sklearn
