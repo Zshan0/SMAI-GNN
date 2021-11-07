@@ -18,15 +18,14 @@ def parse_dataset(name: str):
     dataset_folder_name = DATA_PATH + name + "/"
     edge_list_filename = dataset_folder_name + name + "_A.txt"
     graph_indicator_filename = (
-            dataset_folder_name + name + "_graph_indicator.txt"
+        dataset_folder_name + name + "_graph_indicator.txt"
     )
     graph_label_filename = dataset_folder_name + name + "_graph_labels.txt"
-    #     print(edge_list_filename, graph_indicator_filename, graph_label_filename)
     node_label_filename = dataset_folder_name + name + "_node_labels.txt"
     assert (
-            os.path.isfile(edge_list_filename)
-            and os.path.isfile(graph_indicator_filename)
-            and os.path.isfile(graph_label_filename)
+        os.path.isfile(edge_list_filename)
+        and os.path.isfile(graph_indicator_filename)
+        and os.path.isfile(graph_label_filename)
     ), "Dataset not found"
 
     # graph_id -> [nodes]
@@ -42,22 +41,32 @@ def parse_dataset(name: str):
     graph_labels = graph_labels_df[0].to_list()
 
     edge_list_df = pd.read_csv(edge_list_filename, header=None)
-
     edges = list(edge_list_df.itertuples(index=False, name=None))
-    graphs = [Graph(graph_labels[i], nx.Graph(), i + 1, node_tags={}) for i in range(graph_count)]
+
+    glabel_map = {}
+    for label in graph_labels:
+        if label not in glabel_map:
+            glabel_map[label] = len(glabel_map)
+
+    graphs = [
+        Graph(glabel_map[graph_labels[i]], nx.Graph(), i + 1, node_tags=[])
+        for i in range(graph_count)
+    ]
 
     # getting node labels
     if os.path.isfile(node_label_filename):
         print("Loading node labels from file")
         node_labels_df = pd.read_csv(node_label_filename, header=None)
         node_labels = node_labels_df[0].to_list()
+        node_label_mapping = {
+            node_labels[i]: i for i in range(len(node_labels))
+        }
     else:
         print("Setting node labels to zero")
         node_labels = [0] * len(node_to_graph_id)
 
     for idx, graph_id in enumerate(node_to_graph_id):
         graphs[graph_id - 1].g.add_node(idx + 1)
-        graphs[graph_id - 1].node_tags[idx + 1] = node_labels[idx]
 
     for node1, node2 in edges:
         node1 = int(node1)
@@ -66,16 +75,34 @@ def parse_dataset(name: str):
         current_graph = graphs[graph_id - 1].g
         current_graph.add_edge(node1, node2)
 
+    node_dicts = {}
+    # Zero indexing the graphs
+    for graph in graphs:
+        node_list = list(graph.g.nodes())
+        node_dict = {node_list[i]: i for i in range(len(node_list))}
+        node_dicts[graph.id] = node_dict
+        nx.relabel.relabel_nodes(graph.g, node_dict, copy=False)
+
+        # setting the node tags to zero for filling
+        graph.node_tags = [0] * len(graph.g)
+
+    # Setting labels to nodes and indexing.
+    node_label_map = {}
+    for idx, graph_id in enumerate(node_to_graph_id):
+        if node_labels[idx] not in node_label_map:
+            node_label_map[node_labels[idx]] = len(node_label_map)
+
+        graphs[graph_id - 1].node_tags[
+            node_dicts[graph_id][idx + 1]
+        ] = node_label_map[node_labels[idx]]
+
     print("Number of unique graph labels", len(set(graph_labels)))
     print("Number of unique node labels", len(set(node_labels)))
     print("Number of graphs", len(graphs))
     return graphs
 
 
-def main():
-    parse_dataset("PROTEINS")
-    # parse_dataset("REDDIT-MULTI-5K")
-
-
 if __name__ == "__main__":
-    main()
+    parse_dataset("IMDB-MULTI")
+    # parse_dataset("PROTEINS")
+    # parse_dataset("REDDIT-MULTI-5K")

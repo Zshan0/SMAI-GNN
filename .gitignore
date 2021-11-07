@@ -1,5 +1,6 @@
 .DS*
 venv/
 __pycache__/
-dataset/
+extracted_datasets/
 .idea/
+
