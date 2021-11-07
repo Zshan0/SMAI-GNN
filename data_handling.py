@@ -20,14 +20,14 @@ def parse_dataset(name: str):
     dataset_folder_name = DATA_PATH + name + "/"
     edge_list_filename = dataset_folder_name + name + "_A.txt"
     graph_indicator_filename = (
-        dataset_folder_name + name + "_graph_indicator.txt"
+            dataset_folder_name + name + "_graph_indicator.txt"
     )
     graph_label_filename = dataset_folder_name + name + "_graph_labels.txt"
     node_label_filename = dataset_folder_name + name + "_node_labels.txt"
     assert (
-        os.path.isfile(edge_list_filename)
-        and os.path.isfile(graph_indicator_filename)
-        and os.path.isfile(graph_label_filename)
+            os.path.isfile(edge_list_filename)
+            and os.path.isfile(graph_indicator_filename)
+            and os.path.isfile(graph_label_filename)
     ), "Dataset not found"
 
     # graph_id -> [nodes]
@@ -45,13 +45,13 @@ def parse_dataset(name: str):
     edge_list_df = pd.read_csv(edge_list_filename, header=None)
     edges = list(edge_list_df.itertuples(index=False, name=None))
 
-    glabel_map = {}
+    g_label_map = {}
     for label in graph_labels:
-        if label not in glabel_map:
-            glabel_map[label] = len(glabel_map)
+        if label not in g_label_map:
+            g_label_map[label] = len(g_label_map)
 
     graphs = [
-        Graph(glabel_map[graph_labels[i]], nx.Graph(), i + 1, node_tags=[])
+        Graph(g_label_map[graph_labels[i]], nx.Graph(), i + 1, node_tags=[])
         for i in range(graph_count)
     ]
 
@@ -60,9 +60,6 @@ def parse_dataset(name: str):
         print("Loading node labels from file")
         node_labels_df = pd.read_csv(node_label_filename, header=None)
         node_labels = node_labels_df[0].to_list()
-        node_label_mapping = {
-            node_labels[i]: i for i in range(len(node_labels))
-        }
     else:
         print("Setting node labels to zero")
         node_labels = [0] * len(node_to_graph_id)
@@ -101,7 +98,7 @@ def parse_dataset(name: str):
     print("Number of unique graph labels", len(set(graph_labels)))
     print("Number of unique node labels", len(set(node_labels)))
     print("Number of graphs", len(graphs))
-    return graphs
+    return graphs, len(set(graph_labels))
 
 
 # Graphs => list of graph objects
@@ -111,15 +108,24 @@ def parse_dataset(name: str):
 def k_fold_splitter(graphs: [Graph], seed: int, fold_count: int):
     skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
     labels = [graph.label for graph in graphs]
+    skf.get_n_splits(graphs, labels)
     graphs = np.array(graphs)
 
     graph_list_folded = []
-    for train_idxs, test_idxs in skf.split(labels, labels)[:fold_count]:
+    for train_idxs, test_idxs in skf.split(labels, labels):
+        print(train_idxs)
         graph_list_folded.append((graphs[train_idxs], graphs[test_idxs]))
 
-    return graph_list_folded
+    return graph_list_folded[:fold_count]
+
+
+def main():
+    graphs, classes_count = parse_dataset("REDDIT-MULTI-5K")
+    graph_list = k_fold_splitter(graphs, 42, 10)
+    for test, train in graph_list:
+        print(test.shape, train.shape)
 
 
 if __name__ == "__main__":
-    parse_dataset("PROTEINS")
-    # parse_dataset("REDDIT-MULTI-5K")
+    main()
+# parse_dataset("REDDIT-MULTI-5K")
