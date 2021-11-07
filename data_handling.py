@@ -6,6 +6,7 @@
     Main.py => Arg parse
     data_handling => Load the data and return the list of Graph objects
                      Run calls this file again for train test split
+    TODO: store the graphs in a pickle file and just load that instead of parsing the data everytime
 """
 from config import DATA_PATH
 import pandas as pd
@@ -49,12 +50,10 @@ def parse_dataset(name: str):
     for label in graph_labels:
         if label not in g_label_map:
             g_label_map[label] = len(g_label_map)
-
     graphs = [
         Graph(g_label_map[graph_labels[i]], nx.Graph(), i + 1, node_tags=[])
         for i in range(graph_count)
     ]
-
     # getting node labels
     if os.path.isfile(node_label_filename):
         print("Loading node labels from file")
@@ -120,7 +119,7 @@ def k_fold_splitter(graphs: [Graph], seed: int, fold_count: int):
 
 
 def main():
-    graphs, classes_count = parse_dataset("REDDIT-MULTI-5K")
+    graphs, classes_count = parse_dataset("PROTEINS")
     graph_list = k_fold_splitter(graphs, 42, 10)
     for test, train in graph_list:
         print(test.shape, train.shape)
