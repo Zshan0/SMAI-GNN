@@ -10,7 +10,7 @@ class Graph:
         self.id = id
 
     def __str__(self):
-        return f"Graph {self.id} with label {self.label} and {len(self.g)} nodes"
+        return f"Graph {self.id} with label {self.label} and {len(self.g)} nodes and tags are {self.node_tags}"
 
 
 def main():
