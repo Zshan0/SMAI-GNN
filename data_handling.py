@@ -8,6 +8,8 @@
                      Run calls this file again for train test split
     TODO: store the graphs in a pickle file and just load that instead of parsing the data everytime
 """
+from typing import List
+
 from config import DATA_PATH
 import pandas as pd
 import os.path
@@ -15,9 +17,11 @@ import networkx as nx
 from graph import Graph
 from sklearn.model_selection import StratifiedKFold
 import numpy as np
+import torch
+import torch.nn.functional as F
 
 
-def parse_dataset(name: str):
+def parse_dataset(name: str, degree_as_label: bool = False):
     dataset_folder_name = DATA_PATH + name + "/"
     edge_list_filename = dataset_folder_name + name + "_A.txt"
     graph_indicator_filename = (
@@ -50,7 +54,7 @@ def parse_dataset(name: str):
     for label in graph_labels:
         if label not in g_label_map:
             g_label_map[label] = len(g_label_map)
-    graphs = [
+    graphs: List[Graph] = [
         Graph(g_label_map[graph_labels[i]], nx.Graph(), i + 1, node_tags=[])
         for i in range(graph_count)
     ]
@@ -66,12 +70,14 @@ def parse_dataset(name: str):
     for idx, graph_id in enumerate(node_to_graph_id):
         graphs[graph_id - 1].g.add_node(idx + 1)
 
+    for graph in graphs:
+        graph.neighbors = [[] for _ in range(len(graph.g))]
+
     for node1, node2 in edges:
-        node1 = int(node1)
-        node2 = int(node2)
         graph_id = node_to_graph_id[node1 - 1]
         current_graph = graphs[graph_id - 1].g
         current_graph.add_edge(node1, node2)
+
 
     node_dicts = {}
     # Zero indexing the graphs
@@ -84,6 +90,24 @@ def parse_dataset(name: str):
         # setting the node tags to zero for filling
         graph.node_tags = [0] * len(graph.g)
 
+        # set the value of maximum neighbours for a given node in the graph
+        graph.max_neighbor = max([len(x) for x in graph.neighbors])
+
+        # create edge mat
+        edges = [list(pair) for pair in graph.g.edges()]
+        edges.extend([[i, j] for j, i in edges])
+        graph.edge_mat = torch.LongTensor(edges).transpose(0, 1)
+
+        # overwrite node tags if the flag is true
+        if degree_as_label:
+            graph.node_tags = list(dict(graph.g.degree).values())
+
+    for graph in graphs:
+        graph.neighbors = [[] for _ in range(len(graph.g))]
+        for i, j in graph.g.edges():
+            graph.neighbors[i].append(j)
+            graph.neighbors[j].append(i)
+
     # Setting labels to nodes and indexing.
     node_label_map = {}
     for idx, graph_id in enumerate(node_to_graph_id):
@@ -94,9 +118,16 @@ def parse_dataset(name: str):
             node_dicts[graph_id][idx + 1]
         ] = node_label_map[node_labels[idx]]
 
+    # the count of labels encountered in the entire dataset
+    num_labels = len(node_label_map)
+
+    for graph in graphs:
+        graph.node_features = F.one_hot(torch.tensor(graph.node_tags), num_classes=num_labels)
+
     print("Number of unique graph labels", len(set(graph_labels)))
     print("Number of unique node labels", len(set(node_labels)))
     print("Number of graphs", len(graphs))
+
     return graphs, len(set(graph_labels))
 
 

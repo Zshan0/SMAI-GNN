@@ -1,11 +1,16 @@
+from typing import Optional, List
+
+import numpy as np
+
+
 class Graph:
     def __init__(self, label, g, id, node_tags=None):
         self.label = label
         self.g = g
         self.node_tags = node_tags
-        self.neighbors = []
-        self.node_features = 0
-        self.edge_mat = 0
+        self.neighbors: List[List[int]] = []
+        self.node_features: Optional[np.array] = None
+        self.edge_mat: Optional[np.array] = None
         self.max_neighbor = 0
         self.id = id
 
