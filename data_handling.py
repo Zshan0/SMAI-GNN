@@ -135,7 +135,7 @@ def parse_dataset(name: str, degree_as_label: bool = False):
 # The number of folds to train on
 # Return an [(test_graphs, train_graphs)]
 # Seed
-def k_fold_splitter(graphs: [Graph], seed: int, fold_count: int):
+def k_fold_splitter(graphs: List[Graph], seed: int, fold_count: int):
     skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
     labels = [graph.label for graph in graphs]
     skf.get_n_splits(graphs, labels)

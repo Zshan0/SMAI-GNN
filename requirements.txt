@@ -4,3 +4,6 @@ numpy
 networkx
 pandas
 sklearn
+torch-scatter -f https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html
+torch-sparse -f https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html
+torch-geometric
