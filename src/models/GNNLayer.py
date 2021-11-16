@@ -43,16 +43,16 @@ class GNNLayer(nn.Module):
             MAX(ReLU(W \times h_u^{k - 1}), \forall u N(v))
 
         Inputs:
-            H: 2D Matrix of all feature vectors. [i, j] represents jth feature
+            H: 2D Tensor of all feature vectors. [i, j] represents jth feature
                of  ith node
-            combined_neighbours: 2D matrix of neighbours of all nodes.
+            combined_neighbours: 2D Tensor of neighbours of all nodes.
                                  [i, j] is the jth neighbour of ith node.
         """
         new_H = F.relu(self.W.mm(H.t())).t()
 
         # min of all nodes will serve as invariant for max
-        min_row = torch.min(new_h, dim=0).values
-        new_H = torch.cat([new_H, min_row.t()])
+        min_row = torch.min(new_H, dim=0).values
+        new_H = torch.cat([new_H, min_row.reshape((1, -1))])
 
         # combine after considering the invariant into the picture.
         new_H = self.combine(new_H[combined_neighbours], H)
@@ -64,9 +64,9 @@ class GNNLayer(nn.Module):
         will not have any combine function.
 
         Inputs:
-            H: 3D matrix of feature vector of neighbours. [i, j, k] represents
+            H: 3D Tensor of feature vector of neighbours. [i, j, k] represents
                the kth feature of jth neighbour of ith node.
-            a: 2D matrix of all feature vectors. [i, j] represents jth feature
+            a: 2D Tensor of all feature vectors. [i, j] represents jth feature
                of  ith node
         """
         return H

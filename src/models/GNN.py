@@ -59,7 +59,7 @@ class GNN(nn.Module):
         """
         max_degree = max([graph.max_degree for graph in graph_batch])
 
-        total_nodes = sum([len(graph) for graph in graph_batch])
+        total_nodes = sum([len(graph.g) for graph in graph_batch])
 
         cur_num = 0
 
@@ -122,7 +122,7 @@ class GNN(nn.Module):
             [graph.node_features for graph in graph_batch], 0
         )
         graph_cumulative = np.cumsum(
-            [0] + [len(graph) for graph in graph_batch]
+            [0] + [len(graph.g) for graph in graph_batch]
         )
 
         combined_neighbours = self.combine_batch(graph_batch)
