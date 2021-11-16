@@ -121,7 +121,10 @@ def parse_dataset(name: str, degree_as_label: bool = False):
     num_labels = len(node_label_map)
 
     for graph in graphs:
-        graph.node_features = F.one_hot(torch.tensor(graph.node_tags), num_classes=num_labels)
+        graph.features = F.one_hot(torch.tensor(graph.node_tags), num_classes=num_labels)
+        graph.node_features=[[]]*len(graph.features)
+        for idx in range(len(graph.features)):
+            graph.node_features[idx]=(graph.features[idx]).tolist()
 
     print("Number of unique graph labels", len(set(graph_labels)))
     print("Number of unique node labels", len(set(node_labels)))
