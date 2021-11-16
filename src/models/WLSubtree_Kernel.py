@@ -131,16 +131,39 @@ class WL:
 
         return True
 
-    def train(self):
-        if(self.nodes1 != self.nodes2):
-            return False
+    def kernel(self):
+        dictionary1 = {}
+        dictionary2 = {}
+        for node in range(self.nodes1):
+            label = self.label1[node]
+            if(label not in dictionary1.keys()):
+                dictionary1[label] = 0
+            dictionary1[label] += 1
 
+        for node in range(self.nodes2):
+            label = self.label2[node]
+            if(label not in dictionary2.keys()):
+                dictionary2[label] = 0
+            dictionary2[label] += 1
+
+        similarity = 0
+        for label in dictionary1.keys():
+            if(label in dictionary1.keys() and label in dictionary2.keys()):
+                similarity += (dictionary1[label] * dictionary2[label])
+        
+        similarity /= (self.nodes1 * self.nodes2)
+
+        return similarity
+
+    def train(self):
+        similarity = self.niter*self.kernel()
+        print("Initial Similarity : ", similarity)
         for i in range(self.niter):
             self.multisetlabel_determination()
             s1, s2 = self.sorting()
             self.label_compression(s1, s2)
-            print(f"Iteration : {i}")
+            current_similarity = self.kernel()
+            print(f"Iteration : {i} : {current_similarity}")
             self.print_labels()
-
-        isomorphic = self.check()
-        return isomorphic
+            similarity += current_similarity
+        return similarity
