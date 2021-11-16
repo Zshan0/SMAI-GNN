@@ -1,5 +1,5 @@
 import sys
-from WL import WL
+from WLClassic import WL
 import networkx as nx
 from matplotlib import pyplot as plt
 
