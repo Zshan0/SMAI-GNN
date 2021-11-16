@@ -78,7 +78,6 @@ def parse_dataset(name: str, degree_as_label: bool = False):
         current_graph = graphs[graph_id - 1].g
         current_graph.add_edge(node1, node2)
 
-
     node_dicts = {}
     # Zero indexing the graphs
     for graph in graphs:
@@ -94,9 +93,9 @@ def parse_dataset(name: str, degree_as_label: bool = False):
         graph.max_neighbor = max([len(x) for x in graph.neighbors])
 
         # create edge mat
-        edges = [list(pair) for pair in graph.g.edges()]
-        edges.extend([[i, j] for j, i in edges])
-        graph.edge_mat = torch.LongTensor(edges).transpose(0, 1)
+        # edges = [list(pair) for pair in graph.g.edges()]
+        # edges.extend([[i, j] for j, i in edges])
+        # graph.edge_mat = torch.LongTensor(edges).transpose(0, 1)
 
         # overwrite node tags if the flag is true
         if degree_as_label:

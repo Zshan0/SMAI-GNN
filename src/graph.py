@@ -10,7 +10,6 @@ class Graph:
         self.node_tags = node_tags
         self.neighbors: List[List[int]] = []
         self.node_features: Optional[np.array] = None
-        self.edge_mat: Optional[np.array] = None
         self.max_neighbor = 0
         self.id = id
 
