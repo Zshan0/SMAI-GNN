@@ -15,9 +15,7 @@ class Classifier(nn.Module):
         """
         super(Classifier, self).__init__()
 
-        self.layers = nn.Sequential(
-            nn.Linear(input_dim, output_dim), nn.Softmax(dim=output_dim)
-        )
+        self.layers = nn.Sequential(nn.Linear(input_dim, output_dim))
 
     def forward(self, x):
         return self.layers(x)

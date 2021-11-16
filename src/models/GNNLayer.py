@@ -56,7 +56,7 @@ class GNNLayer(nn.Module):
 
         # combine after considering the invariant into the picture.
         new_H = self.combine(new_H[combined_neighbours], H)
-        return torch.max(new_H, dim=1).values
+        return torch.sum(new_H, axis=1)
 
     def combine(self, H, a):
         """
@@ -78,7 +78,7 @@ class GNNLayer(nn.Module):
 
         Inputs:
             node_features: row-vector of size 1 x input_dim.
-            neigh_features: 2D matrix of size num_neighbors x input_dim
+            neigh_features: 2D Tensor of size num_neighbors x input_dim
 
         Returns: [num_neighbors x output_dim] node embedding
         """

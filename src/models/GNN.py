@@ -18,8 +18,8 @@ class GNN(nn.Module):
         self,
         input_dim: int,
         num_layers: int,
+        hidden_dim: int,
         output_dim: int,
-        graph_class_num: int,
         is_concat: bool = False,
     ):
         """
@@ -28,9 +28,9 @@ class GNN(nn.Module):
 
         Inputs:
             input_dim: Size of input features of the nodes.
+            hidden_dim: Size of hidden features of the nodes.
             num_layers: Number of GNN layers to be considered.
-            output_dim: Final output size of the embedding.
-            graph_class_num: Total number of classes for graphs.
+            output_dim: Total number of classes for graphs.
             is_concat: If the combine function involves concatenation.
         """
         super(GNN, self).__init__()
@@ -39,15 +39,17 @@ class GNN(nn.Module):
         self.num_layers = num_layers
         self.output_dim = output_dim
         self.is_concat = is_concat
-        self.graph_class_num = graph_class_num
 
         self.layers = nn.ModuleList()
-        self.layers.append(GNNLayer(input_dim, output_dim, is_concat))
+        self.layers.append(GNNLayer(input_dim, hidden_dim))
         # The output of ith layer will be passed to (i + 1)th layer
         for i in range(1, num_layers):
-            self.layers.append(GNNLayer(output_dim, output_dim, is_concat))
+            self.layers.append(GNNLayer(hidden_dim, hidden_dim))
 
-        self.classifier = Classifier(input_dim, graph_class_num)
+        self.classifiers = nn.ModuleList()
+        self.classifiers.append(Classifier(input_dim, hidden_dim))
+        for i in range(1, num_layers):
+            self.classifiers.append(Classifier(hidden_dim, output_dim))
 
     def combine_batch(self, graph_batch):
         """
@@ -57,7 +59,10 @@ class GNN(nn.Module):
         Inputs:
             graph_batch: list of graphs
         """
-        max_degree = max([graph.max_degree for graph in graph_batch])
+        max_degree = max([graph.max_neighbour for graph in graph_batch])
+        if not self.is_concat:
+            # self loops may not be considered for max degree
+            max_degree += 1
 
         total_nodes = sum([len(graph.g) for graph in graph_batch])
 
@@ -65,20 +70,20 @@ class GNN(nn.Module):
 
         neighbour_list = np.full((total_nodes, max_degree), -1)
         for graph_num, graph in enumerate(graph_batch):
-            nodes = len(graph)
+            nodes = len(graph.g)
             for ind, neighbours in enumerate(graph.neighbours):
-                if not self.concat:
-                    neighbour_list[cur_num + ind][
-                        0 : len(neighbours) + 1
-                    ] = neighbours + [ind]
+                if not self.is_concat:
+                    neighbour_list[cur_num + ind][0 : len(neighbours) + 1] = (
+                        np.array(neighbours + [ind]) + cur_num
+                    )
                 else:
-                    neighbour_list[cur_num + ind][
-                        0 : len(neighbours)
-                    ] = neighbours
+                    neighbour_list[cur_num + ind][0 : len(neighbours)] = (
+                        np.array(neighbours) + cur_num
+                    )
 
             cur_num += nodes
 
-        return torch.Tensor(neighbour_list)
+        return torch.Tensor(neighbour_list).long()
 
     def readout(self, H, graph_cumulative):
         """
@@ -91,9 +96,12 @@ class GNN(nn.Module):
         graph_embed = []
         for ind in range(len(graph_cumulative) - 1):
             graph_embed.append(
-                np.sum(H[graph_cumulative[ind] : graph_cumulative[ind + 1]])
+                torch.sum(
+                    H[graph_cumulative[ind] : graph_cumulative[ind + 1]], axis=0
+                )
             )
-        return torch.Tensor(graph_embed)
+
+        return torch.stack(graph_embed)
 
     def classify(self, graph_embeds):
         """
@@ -105,9 +113,11 @@ class GNN(nn.Module):
             dimensions: [num_graphs x node_features]
         """
         predictions = []
-        for x in graph_embeds:
-            predictions.append(self.classifier(x))
-        return predictions
+        for ind, x in enumerate(graph_embeds):
+            predictions.append(self.classifiers[ind](x))
+        predictions = torch.stack(predictions)
+        # sum across all the intermediate predictions
+        return torch.sum(predictions, axis=0)
 
     def forward(self, graph_batch: List[Graph]):
         """
@@ -118,19 +128,20 @@ class GNN(nn.Module):
             graph_batch: list of graphs
         """
         # dim(graph_features) = total_nodes x dim(node_features)
-        graph_features = torch.cat(
-            [graph.node_features for graph in graph_batch], 0
-        )
+        graph_features = []
+        for graph in graph_batch:
+            graph_features.extend(graph.node_features)
+        graph_features = torch.Tensor(graph_features)
         graph_cumulative = np.cumsum(
             [0] + [len(graph.g) for graph in graph_batch]
         )
 
         combined_neighbours = self.combine_batch(graph_batch)
 
-        graph_embeds = []
         H = graph_features
+        graph_embeds = [self.readout(H, graph_cumulative)]
         for layer in range(self.num_layers - 1):
-            graph_embeds.append(self.readout(H, graph_cumulative))
             H = self.layers[layer](H, combined_neighbours)
+            graph_embeds.append(self.readout(H, graph_cumulative))
 
         return self.classify(graph_embeds)
