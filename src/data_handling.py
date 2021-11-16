@@ -24,15 +24,13 @@ import torch.nn.functional as F
 def parse_dataset(name: str, degree_as_label: bool = False):
     dataset_folder_name = DATA_PATH + name + "/"
     edge_list_filename = dataset_folder_name + name + "_A.txt"
-    graph_indicator_filename = (
-            dataset_folder_name + name + "_graph_indicator.txt"
-    )
+    graph_indicator_filename = dataset_folder_name + name + "_graph_indicator.txt"
     graph_label_filename = dataset_folder_name + name + "_graph_labels.txt"
     node_label_filename = dataset_folder_name + name + "_node_labels.txt"
     assert (
-            os.path.isfile(edge_list_filename)
-            and os.path.isfile(graph_indicator_filename)
-            and os.path.isfile(graph_label_filename)
+        os.path.isfile(edge_list_filename)
+        and os.path.isfile(graph_indicator_filename)
+        and os.path.isfile(graph_label_filename)
     ), "Dataset not found"
 
     # graph_id -> [nodes]
@@ -113,15 +111,17 @@ def parse_dataset(name: str, degree_as_label: bool = False):
         if node_labels[idx] not in node_label_map:
             node_label_map[node_labels[idx]] = len(node_label_map)
 
-        graphs[graph_id - 1].node_tags[
-            node_dicts[graph_id][idx + 1]
-        ] = node_label_map[node_labels[idx]]
+        graphs[graph_id - 1].node_tags[node_dicts[graph_id][idx + 1]] = node_label_map[
+            node_labels[idx]
+        ]
 
     # the count of labels encountered in the entire dataset
     num_labels = len(node_label_map)
 
     for graph in graphs:
-        graph.node_features = F.one_hot(torch.tensor(graph.node_tags), num_classes=num_labels)
+        graph.node_features = F.one_hot(
+            torch.tensor(graph.node_tags), num_classes=num_labels
+        )
 
     print("Number of unique graph labels", len(set(graph_labels)))
     print("Number of unique node labels", len(set(node_labels)))
