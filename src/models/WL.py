@@ -20,8 +20,6 @@ class WL:
         self.nodes2 = len(self.G2.g)
         self.niter = num_iter
         self.max_label = 0
-        # self.prev_label1 = [1] * G1.g
-        # self.prev_label2 = [1] * G2.g
         self.label1 = [1] * self.nodes1
         self.label2 = [1] * self.nodes2
         self.M1 = [0] * self.nodes1
@@ -38,7 +36,6 @@ class WL:
             multiset = []
             self.max_label = max(self.max_label, self.label1[current_node])
             for neighbor in self.G1.neighbors[current_node]:
-                # print("To check this out: ", current_node, neighbor)
                 multiset.append(self.label1[neighbor])
             self.M1[current_node] = multiset
 
@@ -57,14 +54,14 @@ class WL:
         string_repr1 = [""] * self.nodes1
         for current_node in range(self.nodes1):
             self.M1[current_node].sort()
-            string_repr1[current_node] = str(current_node)
+            string_repr1[current_node] = str(self.label1[current_node])
             for label in self.M1[current_node]:
                 string_repr1[current_node] += str(label)
 
         string_repr2 = [""] * self.nodes2
         for current_node in range(self.nodes2):
             self.M2[current_node].sort()
-            string_repr2[current_node] = str(current_node)
+            string_repr2[current_node] = str(self.label2[current_node])
             for label in self.M2[current_node]:
                 string_repr2[current_node] += str(label)
 
@@ -105,9 +102,6 @@ class WL:
                     self.label2[node] = counter
             counter += 1
 
-    # def relabelling(self):
-    #     pass
-
     def print_labels(self):
         print("Graph 1")
         for node in range(self.nodes1):
@@ -145,7 +139,6 @@ class WL:
             self.multilabel_determination()
             s1, s2 = self.sorting()
             self.label_compression(s1, s2)
-            # self.relabelling()
             print(f"Iteration : {i}")
             self.print_labels()
 
