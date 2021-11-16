@@ -4,7 +4,7 @@ import numpy as np
 
 
 class Graph:
-    def __init__(self, label, g, id, node_tags=None):
+    def __init__(self, label=None, g=None, id=None, node_tags=None):
         self.label = label
         self.g = g
         self.node_tags = node_tags
