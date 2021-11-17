@@ -24,9 +24,6 @@ class WL:
         self.label2 = self.G2.node_features
         self.M1 = [0] * self.nodes1
         self.M2 = [0] * self.nodes2
-    
-    def __del__(self):
-        print("Deleted object")
 
     def unite(self, vec):
         """
@@ -48,7 +45,8 @@ class WL:
         """
         for current_node in range(self.nodes1):
             multiset = []
-            self.max_label = max(self.max_label, self.unite(self.label1[current_node]))
+            self.max_label = max(
+                self.max_label, self.unite(self.label1[current_node]))
             for neighbor in self.G1.neighbors[current_node]:
                 label = self.unite(self.label1[neighbor])
                 multiset.append(label)
@@ -56,9 +54,10 @@ class WL:
 
         for current_node in range(self.nodes2):
             multiset = []
-            self.max_label = max(self.max_label, self.unite(self.label2[current_node]))
+            self.max_label = max(
+                self.max_label, self.unite(self.label2[current_node]))
             for neighbor in self.G2.neighbors[current_node]:
-                label=self.unite(self.label2[neighbor])
+                label = self.unite(self.label2[neighbor])
                 multiset.append(label)
             self.M2[current_node] = multiset
 
@@ -70,14 +69,16 @@ class WL:
         string_repr1 = [""] * self.nodes1
         for current_node in range(self.nodes1):
             self.M1[current_node].sort()
-            string_repr1[current_node] = str(self.unite(self.label1[current_node]))
+            string_repr1[current_node] = str(
+                self.unite(self.label1[current_node]))
             for label in self.M1[current_node]:
                 string_repr1[current_node] += str(label)
 
         string_repr2 = [""] * self.nodes2
         for current_node in range(self.nodes2):
             self.M2[current_node].sort()
-            string_repr2[current_node] = str(self.unite(self.label2[current_node]))
+            string_repr2[current_node] = str(
+                self.unite(self.label2[current_node]))
             for label in self.M2[current_node]:
                 string_repr2[current_node] += str(label)
 
@@ -166,21 +167,21 @@ class WL:
         for label in dictionary1.keys():
             if(label in dictionary1.keys() and label in dictionary2.keys()):
                 similarity += (dictionary1[label] * dictionary2[label])
-        
+
         similarity /= (self.nodes1 * self.nodes2)
 
         return similarity
 
     def train(self):
-        similarity = self.niter *self.kernel()
+        similarity = self.niter * self.kernel()
         # print("Initial Similarity : ", similarity)
         for i in range(self.niter):
             self.multisetlabel_determination()
             s1, s2 = self.sorting()
             self.label_compression(s1, s2)
             current_similarity = self.kernel()
-            print(f"Iteration : {i} : {current_similarity}")
+            # print(f"Iteration : {i} : {current_similarity}")
             # self.print_labels()
             similarity += current_similarity
-        
+
         return similarity

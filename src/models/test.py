@@ -1,5 +1,7 @@
 import sys
 
+import copy
+import random
 from WLSubtree_Kernel import WL
 import networkx as nx
 from matplotlib import pyplot as plt
@@ -12,16 +14,6 @@ except:
     from graph import Graph
     from data_handling import *
 
-graphs, classes_count=parse_dataset("PROTEINS")
-
-# G1=graphs[1]
-G2=graphs[4]
-
-for graph in graphs:
-    if(graph.label==1):
-        G1=graph
-        break
-
 
 def generate_adjacency_list(G):
     adj = [0] * len(G)
@@ -32,83 +24,36 @@ def generate_adjacency_list(G):
     return adj
 
 
-# G1 = nx.Graph()
-# G2 = nx.Graph()
+def main():
+    graphs, classes_count = parse_dataset("PROTEINS")
+    graphs = [
+        graphs[random.randint(0, len(graphs) - 1)]
+        for _ in range(100)
+    ]
 
-# G1.add_edge(0, 1)
-# G1.add_edge(0, 2)
-# G1.add_edge(0, 3)
-# G1.add_edge(1, 2)
-# G1.add_edge(2, 4)
-# G1.add_edge(3, 4)
+    """
+    Average similarity for similar graphs = x
+    Average similarity for dissimilar graphs = y    
+    """
+    x = 0
+    y = 0
+    count_x = 0
+    count_y = 0
+    for i in range(len(graphs)):
+        for j in range(i + 1, len(graphs)):
+            G1 = copy.deepcopy(graphs[i])
+            G2 = copy.deepcopy(graphs[j])
+            res = WL(G1, G2, 10).train()
+            # print(f"{res}, {G1.label}, {G2.label}")
+            if G1.label == G2.label:
+                x += res
+                count_x += 1
+            else:
+                y += res
+                count_y += 1
 
-# G2.add_edge(0, 1)
-# G2.add_edge(0, 2)
-# G2.add_edge(0, 4)
-# G2.add_edge(1, 2)
-# G2.add_edge(1, 3)
-# G2.add_edge(3, 4)
-
-# G1.add_edge(0, 1)
-# G1.add_edge(0, 2)
-# G1.add_edge(1, 2)
-# G1.add_edge(1, 3)
-# G1.add_edge(2, 3)
-# G1.add_edge(3, 4)
-# G1.add_edge(3, 5)
-
-# G2.add_edge(0, 1)
-# G2.add_edge(1, 2)
-# G2.add_edge(1, 3)
-# G2.add_edge(1, 4)
-# G2.add_edge(2, 3)
-# G2.add_edge(3, 4)
-# G2.add_edge(4, 5)
-
-# plt.subplot(121)
-# nx.draw(G1.g, with_labels=True)
-# plt.subplot(122)
-# nx.draw_circular(G2.g, with_labels=True)
-# plt.show()
-# plt.savefig("images/protein_graphs.png")
+    print(f"Average similarity for similar graphs = {x / count_x}")
+    print(f"Average similarity for dissimilar graphs = {y / count_y}")
 
 
-# neighbors1 = [
-#     [1, 2, 3],
-#     [0, 2],
-#     [0, 1, 4],
-#     [0, 4],
-#     [2, 3]
-# ]
-# neighbors2 = [
-#     [1, 2, 4],
-#     [0, 2, 3],
-#     [0, 1],
-#     [1, 4],
-#     [0, 3]
-# ]
-
-# print(generate_adjacency_list(G1))
-
-# neighbors1 = generate_adjacency_list(G1)
-# neighbors2 = generate_adjacency_list(G2)
-
-# print(neighbors1)
-# print(neighbors2)
-# exit()
-
-# g1 = Graph(g=G1)
-# g1.neighbors = neighbors1
-
-# g2 = Graph(g=G2)
-# g2.neighbors = neighbors2
-
-wl = WL(G1, G2, 10)
-result = wl.train()
-del wl
-print(result)
-
-wl = WL(G1, G2, 10)
-result = wl.train()
-del wl
-print(result)
+main()
