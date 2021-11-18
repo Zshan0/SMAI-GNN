@@ -20,7 +20,7 @@ def wl_func(G1,G2):
     result = wl.train()
     return result
 
-n=5
+n = 5
 
 for i in range(n):
     for j in range(i+1,n):

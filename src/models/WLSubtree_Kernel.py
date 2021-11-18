@@ -27,14 +27,21 @@ class WL:
 
     def unite(self, vec):
         """
-        Uniting n-dimensional feature vector of each node into a single value 
+        Uniting n-dimensional feature vector of each node into a single value.
+        We need a injective function to unite the feature vectors to a single value.
         Approaches:
             - concatenation
+            - binary
+            - index of one
         """
         if type(vec) == int:
             return vec
-        vec = "".join(map(str, vec))
-        return int(vec)
+        for i in range(len(vec)):
+            if vec[i] == 1:
+                return i
+        return len(vec)
+        # vec = "".join(map(str, vec))
+        # return int(vec, 2)
 
     def multisetlabel_determination(self):
         """
@@ -148,7 +155,13 @@ class WL:
 
         return True
 
+    def func(self, a, b):
+        return a * b
+
     def kernel(self):
+        """
+        At ith iteration, we have node_features for nodes of Graph 1 and Graph 2.
+        """
         dictionary1 = {}
         dictionary2 = {}
         for node in range(self.nodes1):
@@ -165,15 +178,15 @@ class WL:
 
         similarity = 0
         for label in dictionary1.keys():
-            if(label in dictionary1.keys() and label in dictionary2.keys()):
-                similarity += (dictionary1[label] * dictionary2[label])
+            if (label in dictionary1.keys() and label in dictionary2.keys()):
+                similarity += self.func(dictionary1[label], dictionary2[label])
 
-        similarity /= (self.nodes1 * self.nodes2)
+        similarity /= self.func(self.nodes1, self.nodes2)
 
         return similarity
 
     def train(self):
-        similarity = self.niter * self.kernel()
+        similarity = (self.niter + 1) * self.kernel()
         # print("Initial Similarity : ", similarity)
         for i in range(self.niter):
             self.multisetlabel_determination()
@@ -182,6 +195,6 @@ class WL:
             current_similarity = self.kernel()
             # print(f"Iteration : {i} : {current_similarity}")
             # self.print_labels()
-            similarity += current_similarity
+            similarity += current_similarity * (self.niter - i)
 
         return similarity

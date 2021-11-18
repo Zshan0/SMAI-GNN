@@ -24,17 +24,14 @@ def generate_adjacency_list(G):
     return adj
 
 
-def main():
-    graphs, classes_count = parse_dataset("PROTEINS")
-    graphs = [
-        graphs[random.randint(0, len(graphs) - 1)]
-        for _ in range(100)
-    ]
-
+def main(num):
     """
     Average similarity for similar graphs = x
     Average similarity for dissimilar graphs = y    
     """
+    graphs, classes_count = parse_dataset("PROTEINS")
+    graphs = [graphs[random.randint(0, len(graphs) - 1)] for _ in range(num)]
+    
     x = 0
     y = 0
     count_x = 0
@@ -43,7 +40,7 @@ def main():
         for j in range(i + 1, len(graphs)):
             G1 = copy.deepcopy(graphs[i])
             G2 = copy.deepcopy(graphs[j])
-            res = WL(G1, G2, 10).train()
+            res = WL(G1, G2, 7).train()
             # print(f"{res}, {G1.label}, {G2.label}")
             if G1.label == G2.label:
                 x += res
@@ -56,4 +53,4 @@ def main():
     print(f"Average similarity for dissimilar graphs = {y / count_y}")
 
 
-main()
+main(100)
