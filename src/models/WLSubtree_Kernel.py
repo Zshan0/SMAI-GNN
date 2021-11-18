@@ -36,10 +36,12 @@ class WL:
         """
         if type(vec) == int:
             return vec
-        for i in range(len(vec)):
-            if vec[i] == 1:
-                return i
-        return len(vec)
+        else:
+            return 1
+        # for i in range(len(vec)):
+        #     if vec[i] == 1:
+        #         return i
+        # return len(vec)
         # vec = "".join(map(str, vec))
         # return int(vec, 2)
 
@@ -181,7 +183,7 @@ class WL:
             if (label in dictionary1.keys() and label in dictionary2.keys()):
                 similarity += self.func(dictionary1[label], dictionary2[label])
 
-        similarity /= self.func(self.nodes1, self.nodes2)
+        # similarity /= self.func(self.nodes1, self.nodes2)
 
         return similarity
 
