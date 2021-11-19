@@ -1,1 +1,1 @@
-DATA_PATH = "../../extracted_datasets/"
+DATA_PATH = "../extracted_datasets/"

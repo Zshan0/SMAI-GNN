@@ -14,13 +14,24 @@ import numpy as np
 
 from tqdm import tqdm
 
-from data_handling import parse_dataset, k_fold_splitter
-from models.GNN import GNN
+from models.gnn import GNN
 
 criterion = nn.CrossEntropyLoss()
 
 from tqdm import tqdm
 from data_handling import parse_dataset, k_fold_splitter
+
+
+def pass_data_iteratively(model, graphs, minibatch_size=64):
+    model.eval()
+    output = []
+    idx = np.arange(len(graphs))
+    for i in range(0, len(graphs), minibatch_size):
+        sampled_idx = idx[i : i + minibatch_size]
+        if len(sampled_idx) == 0:
+            continue
+        output.append(model([graphs[j] for j in sampled_idx]).detach())
+    return torch.cat(output, 0)
 
 
 def parse_arguments():
@@ -61,7 +72,7 @@ def parse_arguments():
     parser.add_argument(
         "--fold_count",
         type=int,
-        default=0,
+        default=1,
         help="The number of folds to train on. To reduce the time to train",
     )
     parser.add_argument(
@@ -120,7 +131,7 @@ def train(args, model, device, train_graphs, optimizer, epoch):
     model.train()
 
     total_iters = args.iters_per_epoch
-    pbar = tqdm(range(total_iters), unit='batch')
+    pbar = tqdm(range(total_iters), unit="batch")
 
     loss_accum = 0
     for pos in pbar:
@@ -148,7 +159,7 @@ def train(args, model, device, train_graphs, optimizer, epoch):
         loss_accum += loss
 
         # report
-        pbar.set_description('epoch: %d' % (epoch))
+        pbar.set_description("epoch: %d" % (epoch))
 
     average_loss = loss_accum / total_iters
     print("loss training: %f" % (average_loss))
@@ -193,10 +204,34 @@ def main():
     graphs, num_classes = parse_dataset(args.dataset, args.degree_as_tag)
 
     ##10-fold cross validation.
-    train_graphs, test_graphs = k_fold_splitter(
-        graphs, args.seed, args.fold_idx
-    )
-    print(num_classes, len(train_graphs), len(test_graphs))
+    train_test_folds = k_fold_splitter(graphs, args.seed, args.fold_count)
+    print(num_classes, len(train_test_folds))
+
+    model = GNN(
+        train_test_folds[0][0][0].node_features.shape[1],
+        args.num_layers,
+        args.hidden_dim,
+        num_classes,
+        False,
+    ).to(device)
+
+    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
+
+    current_fold = train_test_folds[0]
+    for epoch in range(1, args.epochs + 1):
+        scheduler.step()
+
+        avg_loss = train(args, model, device, current_fold[0], optimizer, epoch)
+        acc_train, acc_test = test(
+            args, model, device, current_fold[0], current_fold[1], epoch
+        )
+
+        if not args.filename == "":
+            with open(args.filename, "w") as f:
+                f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
+                f.write("\n")
+        print("")
 
 
 if __name__ == "__main__":

@@ -8,9 +8,9 @@ class Graph:
         self.label = label
         self.g = g
         self.node_tags = node_tags
-        self.neighbors: List[List[int]] = []
+        self.neighbours: List[List[int]] = []
         self.node_features: Optional[np.array] = None
-        self.max_neighbor = 0
+        self.max_neighbour = 0
         self.id = id
 
     def __str__(self):
@@ -18,6 +18,7 @@ class Graph:
 
     def __copy__(self):
         pass
+
 
 def main():
     pass

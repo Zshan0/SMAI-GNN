@@ -71,7 +71,7 @@ def parse_dataset(name: str, degree_as_label: bool = False):
         graphs[graph_id - 1].g.add_node(idx + 1)
 
     for graph in graphs:
-        graph.neighbors = [[] for _ in range(len(graph.g))]
+        graph.neighbours = [[] for _ in range(len(graph.g))]
 
     for node1, node2 in edges:
         graph_id = node_to_graph_id[node1 - 1]
@@ -90,7 +90,6 @@ def parse_dataset(name: str, degree_as_label: bool = False):
         graph.node_tags = [0] * len(graph.g)
 
         # set the value of maximum neighbours for a given node in the graph
-        graph.max_neighbor = max([len(x) for x in graph.neighbors])
 
         # create edge mat
         # edges = [list(pair) for pair in graph.g.edges()]
@@ -102,10 +101,10 @@ def parse_dataset(name: str, degree_as_label: bool = False):
             graph.node_tags = list(dict(graph.g.degree).values())
 
     for graph in graphs:
-        graph.neighbors = [[] for _ in range(len(graph.g))]
+        graph.neighbours = [[] for _ in range(len(graph.g))]
         for i, j in graph.g.edges():
-            graph.neighbors[i].append(j)
-            graph.neighbors[j].append(i)
+            graph.neighbours[i].append(j)
+            graph.neighbours[j].append(i)
 
     # Setting labels to nodes and indexing.
     node_label_map = {}
@@ -124,6 +123,7 @@ def parse_dataset(name: str, degree_as_label: bool = False):
         graph.node_features = F.one_hot(
             torch.tensor(graph.node_tags), num_classes=num_labels
         )
+        graph.max_neighbour = max([len(x) for x in graph.neighbours])
 
     print("Number of unique graph labels", len(set(graph_labels)))
     print("Number of unique node labels", len(set(node_labels)))
@@ -147,6 +147,7 @@ def k_fold_splitter(graphs: List[Graph], seed: int, fold_count: int):
         print(train_idxs)
         graph_list_folded.append((graphs[train_idxs], graphs[test_idxs]))
 
+    print(len(graph_list_folded))
     return graph_list_folded[:fold_count]
 
 
