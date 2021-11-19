@@ -4,8 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from GNNLayer import GNNLayer
-from Classifier import Classifier
+from .gnnlayer import GNNLayer
+from .classifier import Classifier
 
 import sys
 
@@ -47,7 +47,7 @@ class GNN(nn.Module):
             self.layers.append(GNNLayer(hidden_dim, hidden_dim))
 
         self.classifiers = nn.ModuleList()
-        self.classifiers.append(Classifier(input_dim, hidden_dim))
+        self.classifiers.append(Classifier(input_dim, output_dim))
         for i in range(1, num_layers):
             self.classifiers.append(Classifier(hidden_dim, output_dim))
 
@@ -60,6 +60,7 @@ class GNN(nn.Module):
             graph_batch: list of graphs
         """
         max_degree = max([graph.max_neighbour for graph in graph_batch])
+        # print("MD", max_degree)
         if not self.is_concat:
             # self loops may not be considered for max degree
             max_degree += 1
@@ -69,7 +70,7 @@ class GNN(nn.Module):
         cur_num = 0
 
         neighbour_list = np.full((total_nodes, max_degree), -1)
-        for graph_num, graph in enumerate(graph_batch):
+        for _, graph in enumerate(graph_batch):
             nodes = len(graph.g)
             for ind, neighbours in enumerate(graph.neighbours):
                 if not self.is_concat:
@@ -131,7 +132,8 @@ class GNN(nn.Module):
         graph_features = []
         for graph in graph_batch:
             graph_features.extend(graph.node_features)
-        graph_features = torch.Tensor(graph_features)
+
+        graph_features = torch.stack(graph_features).float()
         graph_cumulative = np.cumsum(
             [0] + [len(graph.g) for graph in graph_batch]
         )
