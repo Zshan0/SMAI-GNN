@@ -72,7 +72,7 @@ def parse_arguments():
     parser.add_argument(
         "--fold_count",
         type=int,
-        default=1,
+        default=10,
         help="The number of folds to train on. To reduce the time to train",
     )
     parser.add_argument(
@@ -218,20 +218,25 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
 
-    current_fold = train_test_folds[0]
+    accuracies = []
     for epoch in range(1, args.epochs + 1):
-        scheduler.step()
+        for current_fold in train_test_folds:
+            scheduler.step()
 
-        avg_loss = train(args, model, device, current_fold[0], optimizer, epoch)
-        acc_train, acc_test = test(
-            args, model, device, current_fold[0], current_fold[1], epoch
-        )
+            avg_loss = train(args, model, device, current_fold[0], optimizer, epoch)
+            acc_train, acc_test = test(
+                args, model, device, current_fold[0], current_fold[1], epoch
+            )
+            accuracies.append((avg_loss, acc_train, acc_test))
+            if not args.filename == "":
+                with open(args.filename, "w") as f:
+                    f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
+                    f.write("\n")
+            print("")
 
-        if not args.filename == "":
-            with open(args.filename, "w") as f:
-                f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
-                f.write("\n")
-        print("")
+    import json
+    with open("result.json", "w") as f:
+        json.dump(accuracies, f)
 
 
 if __name__ == "__main__":
