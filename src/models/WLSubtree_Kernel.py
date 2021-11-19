@@ -20,10 +20,30 @@ class WL:
         self.nodes2 = len(self.G2.g)
         self.niter = num_iter
         self.max_label = 0
-        self.label1 = [1] * self.nodes1
-        self.label2 = [1] * self.nodes2
+        self.label1 = self.G1.node_features
+        self.label2 = self.G2.node_features
         self.M1 = [0] * self.nodes1
         self.M2 = [0] * self.nodes2
+
+    def unite(self, vec):
+        """
+        Uniting n-dimensional feature vector of each node into a single value.
+        We need a injective function to unite the feature vectors to a single value.
+        Approaches:
+            - concatenation
+            - binary
+            - index of one
+        """
+        if type(vec) == int:
+            return vec
+        else:
+            return 1
+        # for i in range(len(vec)):
+        #     if vec[i] == 1:
+        #         return i
+        # return len(vec)
+        # vec = "".join(map(str, vec))
+        # return int(vec, 2)
 
     def multisetlabel_determination(self):
         """
@@ -34,16 +54,20 @@ class WL:
         """
         for current_node in range(self.nodes1):
             multiset = []
-            self.max_label = max(self.max_label, self.label1[current_node])
+            self.max_label = max(
+                self.max_label, self.unite(self.label1[current_node]))
             for neighbor in self.G1.neighbors[current_node]:
-                multiset.append(self.label1[neighbor])
+                label = self.unite(self.label1[neighbor])
+                multiset.append(label)
             self.M1[current_node] = multiset
 
         for current_node in range(self.nodes2):
             multiset = []
-            self.max_label = max(self.max_label, self.label2[current_node])
+            self.max_label = max(
+                self.max_label, self.unite(self.label2[current_node]))
             for neighbor in self.G2.neighbors[current_node]:
-                multiset.append(self.label2[neighbor])
+                label = self.unite(self.label2[neighbor])
+                multiset.append(label)
             self.M2[current_node] = multiset
 
     def sorting(self):
@@ -54,14 +78,16 @@ class WL:
         string_repr1 = [""] * self.nodes1
         for current_node in range(self.nodes1):
             self.M1[current_node].sort()
-            string_repr1[current_node] = str(self.label1[current_node])
+            string_repr1[current_node] = str(
+                self.unite(self.label1[current_node]))
             for label in self.M1[current_node]:
                 string_repr1[current_node] += str(label)
 
         string_repr2 = [""] * self.nodes2
         for current_node in range(self.nodes2):
             self.M2[current_node].sort()
-            string_repr2[current_node] = str(self.label2[current_node])
+            string_repr2[current_node] = str(
+                self.unite(self.label2[current_node]))
             for label in self.M2[current_node]:
                 string_repr2[current_node] += str(label)
 
@@ -131,16 +157,46 @@ class WL:
 
         return True
 
-    def train(self):
-        if(self.nodes1 != self.nodes2):
-            return False
+    def func(self, a, b):
+        return a * b
 
+    def kernel(self):
+        """
+        At ith iteration, we have node_features for nodes of Graph 1 and Graph 2.
+        """
+        dictionary1 = {}
+        dictionary2 = {}
+        for node in range(self.nodes1):
+            label = self.unite(self.label1[node])
+            if(label not in dictionary1.keys()):
+                dictionary1[label] = 0
+            dictionary1[label] += 1
+
+        for node in range(self.nodes2):
+            label = self.unite(self.label2[node])
+            if(label not in dictionary2.keys()):
+                dictionary2[label] = 0
+            dictionary2[label] += 1
+
+        similarity = 0
+        for label in dictionary1.keys():
+            if (label in dictionary1.keys() and label in dictionary2.keys()):
+                similarity += self.func(dictionary1[label], dictionary2[label])
+
+        # similarity /= self.func(self.nodes1, self.nodes2)
+
+        return similarity
+
+    def train(self):
+        similarity = (self.niter + 1) * self.kernel()
+        # print("Initial Similarity : ", similarity)
         for i in range(self.niter):
             self.multisetlabel_determination()
             s1, s2 = self.sorting()
             self.label_compression(s1, s2)
-            print(f"Iteration : {i}")
-            self.print_labels()
+            current_similarity = self.kernel()
+            # print(f"Iteration : {i} : {current_similarity}")
+            # self.print_labels()
+            similarity += current_similarity * (self.niter - i)
 
-        isomorphic = self.check()
-        return isomorphic
+        return similarity
