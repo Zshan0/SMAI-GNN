@@ -121,12 +121,12 @@ def parse_dataset(name: str, degree_as_label: bool = False, DATA_PATH: str = con
     return graphs, len(set(graph_labels))
 
 
-def k_fold_splitter(graphs: List[Graph], seed: int, fold_count: int):
+def k_fold_splitter(graphs: List[Graph], seed: int, fold_idx: int):
     """
     Split the dataset into different cross validation folds
     :param graphs: The list of all the graphs
     :param seed: Randomization seed
-    :param fold_count: Number of folds to train on
+    :param fold_idx: Index of the fold to train on
     :return:  [(train, test)]
     """
     skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
@@ -136,11 +136,9 @@ def k_fold_splitter(graphs: List[Graph], seed: int, fold_count: int):
 
     graph_list_folded = []
     for train_idxs, test_idxs in skf.split(labels, labels):
-        print(train_idxs)
         graph_list_folded.append((graphs[train_idxs], graphs[test_idxs]))
 
-    print(len(graph_list_folded))
-    return graph_list_folded[:fold_count]
+    return graph_list_folded[fold_idx]
 
 
 def main():
