@@ -1,15 +1,4 @@
-"""
-    Architecture:
-    Run.py calls parse_dataset with the dataset name
-    parse_dataset returns a list of Graph objects 
-    Graph.py => Graph object
-    Main.py => Arg parse
-    data_handling => Load the data and return the list of Graph objects
-                     Run calls this file again for train test split
-    TODO: store the graphs in a pickle file and just load that instead of parsing the data everytime
-"""
 from typing import List
-
 import config
 import pandas as pd
 import os.path
@@ -22,17 +11,24 @@ import torch.nn.functional as F
 
 
 def parse_dataset(name: str, degree_as_label: bool = False, DATA_PATH: str = config.DATA_PATH):
+    """
+    Convert dataset into list of graph objects
+    :param name: Name of the dataset
+    :param degree_as_label: Whether to consider the degree as a feature
+    :param DATA_PATH: The location of the datasets
+    :return: The list of graph objects and the number of classes
+    """
     dataset_folder_name = DATA_PATH + name + "/"
     edge_list_filename = dataset_folder_name + name + "_A.txt"
     graph_indicator_filename = (
-        dataset_folder_name + name + "_graph_indicator.txt"
+            dataset_folder_name + name + "_graph_indicator.txt"
     )
     graph_label_filename = dataset_folder_name + name + "_graph_labels.txt"
     node_label_filename = dataset_folder_name + name + "_node_labels.txt"
     assert (
-        os.path.isfile(edge_list_filename)
-        and os.path.isfile(graph_indicator_filename)
-        and os.path.isfile(graph_label_filename)
+            os.path.isfile(edge_list_filename)
+            and os.path.isfile(graph_indicator_filename)
+            and os.path.isfile(graph_label_filename)
     ), "Dataset not found"
 
     # graph_id -> [nodes]
@@ -89,13 +85,6 @@ def parse_dataset(name: str, degree_as_label: bool = False, DATA_PATH: str = con
         # setting the node tags to zero for filling
         graph.node_tags = [0] * len(graph.g)
 
-        # set the value of maximum neighbours for a given node in the graph
-
-        # create edge mat
-        # edges = [list(pair) for pair in graph.g.edges()]
-        # edges.extend([[i, j] for j, i in edges])
-        # graph.edge_mat = torch.LongTensor(edges).transpose(0, 1)
-
         # overwrite node tags if the flag is true
         if degree_as_label:
             graph.node_tags = list(dict(graph.g.degree).values())
@@ -132,11 +121,14 @@ def parse_dataset(name: str, degree_as_label: bool = False, DATA_PATH: str = con
     return graphs, len(set(graph_labels))
 
 
-# Graphs => list of graph objects
-# The number of folds to train on
-# Return an [(test_graphs, train_graphs)]
-# Seed
-def k_fold_splitter(graphs: List[Graph], seed: int, fold_count: int):
+def k_fold_splitter(graphs: List[Graph], seed: int, fold_idx: int):
+    """
+    Split the dataset into different cross validation folds
+    :param graphs: The list of all the graphs
+    :param seed: Randomization seed
+    :param fold_idx: Index of the fold to train on
+    :return:  [(train, test)]
+    """
     skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
     labels = [graph.label for graph in graphs]
     skf.get_n_splits(graphs, labels)
@@ -144,14 +136,15 @@ def k_fold_splitter(graphs: List[Graph], seed: int, fold_count: int):
 
     graph_list_folded = []
     for train_idxs, test_idxs in skf.split(labels, labels):
-        print(train_idxs)
         graph_list_folded.append((graphs[train_idxs], graphs[test_idxs]))
 
-    print(len(graph_list_folded))
-    return graph_list_folded[:fold_count]
+    return graph_list_folded[fold_idx]
 
 
 def main():
+    """
+    Unit test for this file
+    """
     graphs, classes_count = parse_dataset("PROTEINS")
     graph_list = k_fold_splitter(graphs, 42, 10)
     for test, train in graph_list:
@@ -160,4 +153,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-# parse_dataset("REDDIT-MULTI-5K")

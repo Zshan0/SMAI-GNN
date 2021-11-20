@@ -14,6 +14,10 @@ class WL:
     """
 
     def __init__(self, G1: Graph, G2: Graph, num_iter):
+        """
+        label1 and label2 : Set of labels of the nodes of G1 and G2 respectively 
+        M1 and M2 : Multiset representation of the neighbours of each of the nodes belonging to G1 and G2 respectively 
+        """
         self.G1 = G1
         self.G2 = G2
         self.nodes1 = len(self.G1.g)
@@ -139,6 +143,9 @@ class WL:
         print("---------------")
 
     def check(self):
+        """
+        Compares the label sets of the graphs 
+        """
         label_set1 = []
         for label in self.label1:
             label_set1.append(label)
@@ -163,14 +170,10 @@ class WL:
     def kernel(self):
         """
         At ith iteration, we have node_features for nodes of Graph 1 and Graph 2.
-        We use them to calculate similarity between the two graphs.
-            - similarity += f(occurrences_in_graph_1[label], occurrences_in_graph_2[label])
-                for each label
-            - similarity /= f(self.nodes1, self.nodes2)
-        Here, f is a function that takes two arguments and returns a single value.
-        It can be:
-            - multiplication
-            - min
+<<<<<<< HEAD
+=======
+        Returns the similarity between the graphs using these node features 
+>>>>>>> 35bf07a54f83782cea702cbf6d73f82ed73b7709
         """
         dictionary1 = {}
         dictionary2 = {}
@@ -208,3 +211,6 @@ class WL:
             similarity += current_similarity * (self.niter - i)
 
         return similarity
+
+
+
