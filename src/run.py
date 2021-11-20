@@ -84,7 +84,7 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def train(args, model, device, train_graphs, optimizer, epoch):
+def train(args, model, train_graphs, optimizer, epoch):
     model.train()
 
     total_iters = 50
@@ -99,14 +99,9 @@ def train(args, model, device, train_graphs, optimizer, epoch):
         batch_graph = [train_graphs[idx] for idx in selected_idx]
         output = model(batch_graph)
 
-        labels = torch.LongTensor([graph.label for graph in batch_graph]).to(
-            device
-        )
-
-        # compute loss
+        labels = torch.LongTensor([graph.label for graph in batch_graph])
         loss = criterion(output, labels)
 
-        # backprop
         if optimizer is not None:
             optimizer.zero_grad()
             loss.backward()
@@ -124,20 +119,18 @@ def train(args, model, device, train_graphs, optimizer, epoch):
     return average_loss
 
 
-def test(model, device, train_graphs, test_graphs):
+def test(model, train_graphs, test_graphs):
     model.eval()
 
     output = pass_data_iteratively(model, train_graphs)
     pred = output.max(1, keepdim=True)[1]
-    labels = torch.LongTensor([graph.label for graph in train_graphs]).to(
-        device
-    )
+    labels = torch.LongTensor([graph.label for graph in train_graphs])
     correct = pred.eq(labels.view_as(pred)).sum().cpu().item()
     acc_train = correct / float(len(train_graphs))
 
     output = pass_data_iteratively(model, test_graphs)
     pred = output.max(1, keepdim=True)[1]
-    labels = torch.LongTensor([graph.label for graph in test_graphs]).to(device)
+    labels = torch.LongTensor([graph.label for graph in test_graphs])
     correct = pred.eq(labels.view_as(pred)).sum().cpu().item()
     acc_test = correct / float(len(test_graphs))
 
@@ -150,13 +143,6 @@ def main():
     args = parse_arguments()
     torch.manual_seed(0)
     np.random.seed(0)
-    device = (
-        torch.device("cuda:" + str(args.device))
-        if torch.cuda.is_available()
-        else torch.device("cpu")
-    )
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(0)
 
     graphs, num_classes = parse_dataset(args.dataset, args.degree_as_tag)
 
@@ -169,7 +155,7 @@ def main():
         args.hidden_dim,
         num_classes,
         False,
-    ).to(device)
+    )
 
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
@@ -177,9 +163,9 @@ def main():
     accuracies = []
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
-        avg_loss = train(args, model, device, train_set, optimizer, epoch)
+        avg_loss = train(args, model, train_set, optimizer, epoch)
         acc_train, acc_test = test(
-            model, device, train_set, test_set
+            model, train_set, test_set
         )
         accuracies.append((epoch, avg_loss, acc_train, acc_test))
         print(avg_loss, acc_train, acc_test)
