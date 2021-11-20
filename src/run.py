@@ -140,7 +140,7 @@ def main():
         acc = test(
             model, train_set, test_set
         )
-        accuracies.append((epoch, avg_loss, acc[0], acc[1]))
+        accuracies.append((epoch, float(avg_loss), float(acc[0]), float(acc[1])))
         print(avg_loss, acc[0], acc[1])
 
     with open(f"result-{args.dataset}-{args.fold_idx}-{args.seed}.json", "w") as f:
