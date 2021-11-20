@@ -170,10 +170,14 @@ class WL:
     def kernel(self):
         """
         At ith iteration, we have node_features for nodes of Graph 1 and Graph 2.
-<<<<<<< HEAD
-=======
-        Returns the similarity between the graphs using these node features 
->>>>>>> 35bf07a54f83782cea702cbf6d73f82ed73b7709
+        We use them to calculate similarity between the two graphs.
+            - similarity += f(occurrences_in_graph_1[label], occurrences_in_graph_2[label])
+                for each label
+            - similarity /= f(self.nodes1, self.nodes2)
+        Here, f is a function that takes two arguments and returns a single value.
+        It can be:
+            - multiplication
+            - min
         """
         dictionary1 = {}
         dictionary2 = {}
@@ -211,6 +215,3 @@ class WL:
             similarity += current_similarity * (self.niter - i)
 
         return similarity
-
-
-
