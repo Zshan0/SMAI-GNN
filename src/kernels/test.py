@@ -57,7 +57,7 @@ def accuracy(testing_graphs, training_graphs, avg_nodes_0, avg_nodes_1):
             else:
                 average_1 += sim
                 cnt_1 += 1
-        print(average_0, average_1, len(test_graph.g))
+        # print(average_0, average_1, len(test_graph.g))
         average_0 /= (cnt_0 * avg_nodes_0 * len(test_graph.g))
         average_1 /= (cnt_1 * avg_nodes_1 * len(test_graph.g))
         # print(f"Average sim of {test_graph.label} with:")
