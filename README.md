@@ -6,8 +6,10 @@ Code is present in `./src`. Within `src`, `src/kernels` contains code pertaining
 
 # Testing WL Test
 ```
-python3 src/test.py
+cd src
+python3 test.py
 ```
+Don't run `python3 src/test.py`, it will not work.
 
 # Testing GNN
 To test the GNN code in this repo refer to [this notebook](https://colab.research.google.com/drive/1IVivvmmAbNn7zHODAUel9GeVa4k6h2pQ?usp=sharing#scrollTo=XevCVhF11aUJ).
