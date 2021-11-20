@@ -14,7 +14,6 @@ except:
     from data_handling import *
 
 
-# graphs, classes_count = parse_dataset("PROTEINS")
 def analyse(graphs, classes_count):
     data1 = {
         "min nodes in one graph": np.inf,

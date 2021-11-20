@@ -12,7 +12,7 @@ except:
     from graph import Graph
     from data_handling import *
 
-graphs, classes_count=parse_dataset("PROTEINS")
+graphs, classes_count = parse_dataset("PROTEINS")
 
 
 def wl_func(G1,G2):

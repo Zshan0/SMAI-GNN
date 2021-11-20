@@ -10,7 +10,7 @@
 """
 from typing import List
 
-from config import DATA_PATH
+import config
 import pandas as pd
 import os.path
 import networkx as nx
@@ -21,7 +21,7 @@ import torch
 import torch.nn.functional as F
 
 
-def parse_dataset(name: str, degree_as_label: bool = False):
+def parse_dataset(name: str, degree_as_label: bool = False, DATA_PATH: str = config.DATA_PATH):
     dataset_folder_name = DATA_PATH + name + "/"
     edge_list_filename = dataset_folder_name + name + "_A.txt"
     graph_indicator_filename = (

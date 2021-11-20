@@ -56,8 +56,8 @@ class WL:
             multiset = []
             self.max_label = max(
                 self.max_label, self.unite(self.label1[current_node]))
-            for neighbor in self.G1.neighbors[current_node]:
-                label = self.unite(self.label1[neighbor])
+            for neighbour in self.G1.neighbours[current_node]:
+                label = self.unite(self.label1[neighbour])
                 multiset.append(label)
             self.M1[current_node] = multiset
 
@@ -65,8 +65,8 @@ class WL:
             multiset = []
             self.max_label = max(
                 self.max_label, self.unite(self.label2[current_node]))
-            for neighbor in self.G2.neighbors[current_node]:
-                label = self.unite(self.label2[neighbor])
+            for neighbour in self.G2.neighbours[current_node]:
+                label = self.unite(self.label2[neighbour])
                 multiset.append(label)
             self.M2[current_node] = multiset
 
