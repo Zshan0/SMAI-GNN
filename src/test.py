@@ -1,23 +1,17 @@
 import sys
 
 from networkx import classes
-from graph_analysis import *
+from networkx.readwrite import graph6
+from kernels.graph_analysis import analyse
 from sklearn.model_selection import train_test_split
 import copy
 import random
-from WLSubtree_Kernel import WL
+from kernels.WLSubtree_Kernel import WL
 import networkx as nx
 from matplotlib import pyplot as plt
-
-try:
-    from graph import Graph
-    from data_handling import *
-    from config import DATA_PATH_WL
-except:
-    sys.path.append("..")
-    from graph import Graph
-    from data_handling import *
-    from config import DATA_PATH_WL
+from graph import Graph
+from data_handling import *
+from config import DATA_PATH
 
 
 def generate_adjacency_list(G):
@@ -57,28 +51,37 @@ def accuracy(testing_graphs, training_graphs, avg_nodes_0, avg_nodes_1):
             else:
                 average_1 += sim
                 cnt_1 += 1
-        # print(average_0, average_1, len(test_graph.g))
-        average_0 /= (cnt_0 * avg_nodes_0 * len(test_graph.g))
-        average_1 /= (cnt_1 * avg_nodes_1 * len(test_graph.g))
-        # print(f"Average sim of {test_graph.label} with:")
-        # print(
-        #     f"label 0 graphs = {average_0}, and label 1 graphs = {average_1}")
-        if average_0 > average_1:
+        """
+        Assume that label of the testing graph is 0
+        """
+        average_00 = average_0 / (avg_nodes_0 ** 2) / cnt_0
+        average_01 = average_1 / \
+            ((avg_nodes_1 * len(test_graph.g)) /
+             (avg_nodes_1 + len(test_graph.g))) ** 2 / cnt_1
+        """
+        Assume that label of the testing graph is 1 
+        """
+        average_11 = average_1 / (avg_nodes_1 ** 2) / cnt_1
+        average_10 = average_0 / \
+            ((avg_nodes_0 * len(test_graph.g)) /
+             (avg_nodes_0 + len(test_graph.g))) ** 2 / cnt_0
+        if average_00 + average_10 <= average_11 + average_01:
             answer = 0
         accuracy += (answer == test_graph.label)
     return accuracy / n
 
 
-def main(num):
+def main(num, testnum):
     """
     Average similarity for similar graphs and
     average similarity for dissimilar graphs
     """
-    graphs, classes_count = parse_dataset("PROTEINS", False, DATA_PATH_WL)
+    print("Running WL Test...")
+    graphs, classes_count = parse_dataset("PROTEINS", False, DATA_PATH)
     graphs_train, graphs_test = train_test_split(
         graphs, shuffle=True, test_size=0.33)
     graphs = graphs_train[:num]
-    graphs_test = graphs_test[:10]
+    graphs_test = graphs_test[:testnum]
 
     """
     Use graph analysis as defined in 'graph_analysis.py'
@@ -117,4 +120,4 @@ def main(num):
 
 
 if __name__ == "__main__":
-    main(100)
+    main(num=120, testnum=11)

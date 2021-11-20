@@ -40,7 +40,7 @@ def analyse(graphs, classes_count):
         stats[G.label]["average nodes"] = stats[G.label]["total nodes for all graphs"] / \
             stats[G.label]["number of graphs with this label"]
 
-    pp(stats)
+    # pp(stats)
 
     count_0 = 0
     count_1 = 0
@@ -49,8 +49,8 @@ def analyse(graphs, classes_count):
             count_0 += 1
         else:
             count_1 += 1
-    print("Number of graphs with label 0:", count_0)
-    print("Number of graphs with label 1:", count_1)
+    # print("Number of graphs with label 0:", count_0)
+    # print("Number of graphs with label 1:", count_1)
 
     return stats[0]["average nodes"], stats[0]["total nodes for all graphs"], \
         stats[1]["average nodes"], stats[1]["total nodes for all graphs"]
