@@ -4,3 +4,4 @@ __pycache__/
 extracted_datasets/
 .idea/
 __MACOSX/
+.vscode/

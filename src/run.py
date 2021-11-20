@@ -220,14 +220,14 @@ def main():
 
     accuracies = []
     for epoch in range(1, args.epochs + 1):
-        for current_fold in train_test_folds:
+        for idx, current_fold in enumerate(train_test_folds):
             scheduler.step()
 
             avg_loss = train(args, model, device, current_fold[0], optimizer, epoch)
             acc_train, acc_test = test(
                 args, model, device, current_fold[0], current_fold[1], epoch
             )
-            accuracies.append((avg_loss, acc_train, acc_test))
+            accuracies.append((epoch, idx, avg_loss, acc_train, acc_test))
             if not args.filename == "":
                 with open(args.filename, "w") as f:
                     f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
