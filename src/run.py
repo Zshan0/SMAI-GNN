@@ -20,18 +20,6 @@ from tqdm import tqdm
 from data_handling import parse_dataset, k_fold_splitter
 
 
-def pass_data_iteratively(model, graphs, minibatch_size=64):
-    model.eval()
-    output = []
-    idx = np.arange(len(graphs))
-    for i in range(0, len(graphs), minibatch_size):
-        sampled_idx = idx[i: i + minibatch_size]
-        if len(sampled_idx) == 0:
-            continue
-        output.append(model([graphs[j] for j in sampled_idx]).detach())
-    return torch.cat(output, 0)
-
-
 def parse_arguments():
     parser = argparse.ArgumentParser(description="SMAI project team 30")
     parser.add_argument(
@@ -87,20 +75,17 @@ def parse_arguments():
 def train(args, model, train_graphs, optimizer, epoch):
     model.train()
 
-    total_iters = 50
-    pbar = tqdm(range(total_iters), unit="batch")
-
-    loss_accum = 0
-    for _ in pbar:
+    print("Epoch", epoch)
+    losses = []
+    for _ in tqdm(range(50), unit="batch"):
         selected_idx = np.random.permutation(len(train_graphs))[
                        : args.batch_size
                        ]
 
         batch_graph = [train_graphs[idx] for idx in selected_idx]
-        output = model(batch_graph)
 
         labels = torch.LongTensor([graph.label for graph in batch_graph])
-        loss = criterion(output, labels)
+        loss = criterion(model(batch_graph), labels)
 
         if optimizer is not None:
             optimizer.zero_grad()
@@ -108,35 +93,23 @@ def train(args, model, train_graphs, optimizer, epoch):
             optimizer.step()
 
         loss = loss.detach().cpu().numpy()
-        loss_accum += loss
+        losses.append(loss)
 
-        # report
-        pbar.set_description("epoch: %d" % (epoch))
+    return np.average(np.array(losses))
 
-    average_loss = loss_accum / total_iters
-    print("loss training: %f" % (average_loss))
 
-    return average_loss
+def get_accuracy(model, graphs):
+    pred = model(graphs).detach()
+    pred = pred.argmax(1, keepdim=True)
+    labels = torch.LongTensor([graph.label for graph in graphs])
+    correct = pred.eq(labels.view_as(pred)).sum().cpu().item()
+    acc_train = correct / float(len(graphs))
+    return acc_train
 
 
 def test(model, train_graphs, test_graphs):
     model.eval()
-
-    output = pass_data_iteratively(model, train_graphs)
-    pred = output.max(1, keepdim=True)[1]
-    labels = torch.LongTensor([graph.label for graph in train_graphs])
-    correct = pred.eq(labels.view_as(pred)).sum().cpu().item()
-    acc_train = correct / float(len(train_graphs))
-
-    output = pass_data_iteratively(model, test_graphs)
-    pred = output.max(1, keepdim=True)[1]
-    labels = torch.LongTensor([graph.label for graph in test_graphs])
-    correct = pred.eq(labels.view_as(pred)).sum().cpu().item()
-    acc_test = correct / float(len(test_graphs))
-
-    print("accuracy train: %f test: %f" % (acc_train, acc_test))
-
-    return acc_train, acc_test
+    return get_accuracy(model, train_graphs), get_accuracy(model, test_graphs)
 
 
 def main():
@@ -164,11 +137,11 @@ def main():
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
         avg_loss = train(args, model, train_set, optimizer, epoch)
-        acc_train, acc_test = test(
+        acc = test(
             model, train_set, test_set
         )
-        accuracies.append((epoch, avg_loss, acc_train, acc_test))
-        print(avg_loss, acc_train, acc_test)
+        accuracies.append((epoch, avg_loss, acc[0], acc[1]))
+        print(avg_loss, acc[0], acc[1])
 
     with open(f"result-{args.dataset}-{args.fold_idx}-{args.seed}.json", "w") as f:
         json.dump(accuracies, f)
