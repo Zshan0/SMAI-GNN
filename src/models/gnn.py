@@ -21,6 +21,7 @@ class GNN(nn.Module):
         hidden_dim: int,
         output_dim: int,
         is_concat: bool = False,
+        is_base: bool = True,
     ):
         """
         General class for a graph neural network that is based on the Graph
@@ -39,17 +40,19 @@ class GNN(nn.Module):
         self.num_layers = num_layers
         self.output_dim = output_dim
         self.is_concat = is_concat
+        self.is_base = is_base
 
-        self.layers = nn.ModuleList()
-        self.layers.append(GNNLayer(input_dim, hidden_dim))
-        # The output of ith layer will be passed to (i + 1)th layer
-        for i in range(1, num_layers):
-            self.layers.append(GNNLayer(hidden_dim, hidden_dim))
+        if self.is_base:
+            self.layers = nn.ModuleList()
+            self.layers.append(GNNLayer(input_dim, hidden_dim))
+            # The output of ith layer will be passed to (i + 1)th layer
+            for i in range(1, num_layers):
+                self.layers.append(GNNLayer(hidden_dim, hidden_dim))
 
-        self.classifiers = nn.ModuleList()
-        self.classifiers.append(Classifier(input_dim, output_dim))
-        for i in range(1, num_layers):
-            self.classifiers.append(Classifier(hidden_dim, output_dim))
+            self.classifiers = nn.ModuleList()
+            self.classifiers.append(Classifier(input_dim, output_dim))
+            for i in range(1, num_layers):
+                self.classifiers.append(Classifier(hidden_dim, output_dim))
 
     def combine_batch(self, graph_batch):
         """
