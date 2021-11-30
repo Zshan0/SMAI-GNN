@@ -7,6 +7,8 @@
 """
 import json
 import argparse
+import time
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -68,6 +70,16 @@ def parse_arguments():
         "--degree_as_tag",
         action="store_true",
         help="let the input node features be the degree of nodes (heuristics for unlabeled graph)",
+    )
+    parser.add_argument(
+        "--name",
+        default=f"GNN-{int(time.time())}",
+        help="Save file name for the model",
+    )
+    parser.add_argument(
+        "--output_folder",
+        default=f".",
+        help="Where the output file is stored",
     )
     return parser.parse_args()
 
@@ -143,7 +155,7 @@ def main():
         accuracies.append((epoch, float(avg_loss), float(acc[0]), float(acc[1])))
         print(avg_loss, acc[0], acc[1])
 
-    with open(f"result-{args.dataset}-{args.fold_idx}-{args.seed}.json", "w") as f:
+    with open(f"{args.output_folder}/result-{args.dataset}-{args.fold_idx}-{args.seed}-{args.name}.json", "w") as f:
         json.dump(accuracies, f)
 
 
