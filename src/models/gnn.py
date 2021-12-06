@@ -22,6 +22,7 @@ class GNN(nn.Module):
         output_dim: int,
         is_concat: bool = False,
         is_base: bool = True,
+        use_max: bool = True,
     ):
         """
         General class for a graph neural network that is based on the Graph
@@ -44,10 +45,13 @@ class GNN(nn.Module):
 
         if self.is_base:
             self.layers = nn.ModuleList()
-            self.layers.append(GNNLayer(input_dim, hidden_dim))
+            # True for using weights
+            self.layers.append(GNNLayer(input_dim, hidden_dim, True, use_max))
             # The output of ith layer will be passed to (i + 1)th layer
             for i in range(1, num_layers):
-                self.layers.append(GNNLayer(hidden_dim, hidden_dim))
+                self.layers.append(
+                    GNNLayer(hidden_dim, hidden_dim, True, use_max)
+                )
 
             self.classifiers = nn.ModuleList()
             self.classifiers.append(Classifier(input_dim, output_dim))

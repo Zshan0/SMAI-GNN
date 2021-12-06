@@ -12,7 +12,11 @@ from graph import *
 
 class GNNLayer(nn.Module):
     def __init__(
-        self, input_dim: int, output_dim: int, use_weights: bool = True
+        self,
+        input_dim: int,
+        output_dim: int,
+        use_weights: bool = True,
+        use_max: bool = True,
     ):
         """
         Class for a general layer of a graph neural network that is based on the
@@ -28,6 +32,7 @@ class GNNLayer(nn.Module):
 
         self.input_dim = input_dim
         self.output_dim = output_dim
+        self.use_max = use_max
 
         if use_weights:
             self.W = nn.Parameter(torch.FloatTensor(output_dim, input_dim))
@@ -50,13 +55,21 @@ class GNNLayer(nn.Module):
         """
         new_H = F.relu(self.W.mm(H.t())).t()
 
-        # min of all nodes will serve as invariant for max
-        min_row = torch.min(new_H, dim=0).values
-        new_H = torch.cat([new_H, min_row.reshape((1, -1))])
-
-        # combine after considering the invariant into the picture.
-        new_H = self.combine(new_H[combined_neighbours], H)
-        return torch.sum(new_H, axis=1)
+        if self.use_max:
+            # min of all nodes will serve as invariant for max
+            min_row = torch.min(new_H, dim=0).values
+            new_H = torch.cat([new_H, min_row.reshape((1, -1))])
+            # combine after considering the invariant into the picture.
+            new_H = self.combine(new_H[combined_neighbours], H)
+            return torch.max(new_H, axis=1)
+        else:
+            # using sum-pooling.
+            # zero serves as an invariant for sum-pooling
+            min_row = torch.zeros(new_H.shape[1:])
+            new_H = torch.cat([new_H, min_row.reshape((1, -1))])
+            # combine after considering the invariant into the picture.
+            new_H = self.combine(new_H[combined_neighbours], H)
+            return torch.sum(new_H, axis=1)
 
     def combine(self, H, a):
         """
