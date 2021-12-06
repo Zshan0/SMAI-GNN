@@ -94,6 +94,12 @@ def parse_arguments():
         type=int,
         help="Dimension of MLP layer",
     )
+    parser.add_argument(
+        "--use_max",
+        default=1,
+        type=int,
+        help="To use max or sum",
+    )
     return parser.parse_args()
 
 
@@ -104,8 +110,8 @@ def train(args, model, train_graphs, optimizer, epoch):
     losses = []
     for _ in tqdm(range(50), unit="batch"):
         selected_idx = np.random.permutation(len(train_graphs))[
-                       : args.batch_size
-                       ]
+            : args.batch_size
+        ]
 
         batch_graph = [train_graphs[idx] for idx in selected_idx]
 
@@ -155,7 +161,7 @@ def main():
             output_dim=num_classes,
             is_concat=False,
             hidden_mlp_dim=args.mlp_layer_dim,
-            num_mlp_layers=args.mlp_layers
+            num_mlp_layers=args.mlp_layers,
         )
     else:
         model = GNN(
@@ -164,6 +170,8 @@ def main():
             args.hidden_dim,
             num_classes,
             False,
+            True,
+            args.use_max == 1,
         )
 
     optimizer = optim.Adam(model.parameters(), lr=0.01)
@@ -173,13 +181,16 @@ def main():
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
         avg_loss = train(args, model, train_set, optimizer, epoch)
-        acc = test(
-            model, train_set, test_set
+        acc = test(model, train_set, test_set)
+        accuracies.append(
+            (epoch, float(avg_loss), float(acc[0]), float(acc[1]))
         )
-        accuracies.append((epoch, float(avg_loss), float(acc[0]), float(acc[1])))
         print(avg_loss, acc[0], acc[1])
 
-    with open(f"{args.output_folder}/result-{args.dataset}-{args.fold_idx}-{args.seed}-{args.name}.json", "w") as f:
+    with open(
+        f"{args.output_folder}/result-{args.dataset}-{args.fold_idx}-{args.seed}-{args.name}.json",
+        "w",
+    ) as f:
         json.dump(accuracies, f)
 
 
