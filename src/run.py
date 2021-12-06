@@ -15,6 +15,7 @@ import torch.optim as optim
 import numpy as np
 
 from models.gnn import GNN
+from models.gin import GIN
 
 criterion = nn.CrossEntropyLoss()
 
@@ -81,6 +82,18 @@ def parse_arguments():
         default=f".",
         help="Where the output file is stored",
     )
+    parser.add_argument(
+        "--mlp_layers",
+        default=1,
+        type=int,
+        help="Number of MLP layers",
+    )
+    parser.add_argument(
+        "--mlp_layer_dim",
+        default=128,
+        type=int,
+        help="Dimension of MLP layer",
+    )
     return parser.parse_args()
 
 
@@ -134,13 +147,24 @@ def main():
     train_set, test_set = k_fold_splitter(graphs, args.seed, args.fold_idx)
     print(num_classes)
 
-    model = GNN(
-        train_set[0].node_features.shape[1],
-        args.num_layers,
-        args.hidden_dim,
-        num_classes,
-        False,
-    )
+    if args.mlp_layers > 1:
+        model = GIN(
+            input_dim=train_set[0].node_features.shape[1],
+            num_layers=args.num_layers,
+            hidden_dim=args.hidden_dim,
+            output_dim=num_classes,
+            is_concat=False,
+            hidden_mlp_dim=args.mlp_layer_dim,
+            num_mlp_layers=args.mlp_layers
+        )
+    else:
+        model = GNN(
+            train_set[0].node_features.shape[1],
+            args.num_layers,
+            args.hidden_dim,
+            num_classes,
+            False,
+        )
 
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
