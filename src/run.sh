@@ -1,5 +1,5 @@
-dataset=PROTEINS
-name=GIN
+dataset=$1
+name=$2
 folder_name="$name-$dataset"
 mkdir $folder_name
 for fold_idx in {0..9}
